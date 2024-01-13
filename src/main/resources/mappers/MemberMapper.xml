@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.board.mapper.MemberMapper">
+
+<!-- 회원 가입 -->
+<insert id="memberInfoRegistry" parameterType="com.board.dto.MemberDTO">
+	insert into tbl_member (userid,username,password,telno,email,
+			role,org_filename,stored_filename,filesize,zipcode,address,
+			job,gender,hobby,description,lastpwdate,regdate,pwcheck)  
+			values (#{userid},#{username},#{password},#{telno},#{email},'USER',
+			#{org_filename},#{stored_filename},#{filesize},#{zipcode},#{address},
+			#{job},#{gender},#{hobby},#{description},#{lastpwdate},sysdate,1)
+</insert>
+
+<!--  아이디 중복 확인 -->
+<select id="idCheck" parameterType="string" resultType="int">
+	select count(*) from tbl_member where userid = #{userid}
+</select>
+
+<!-- 회원 정보 가져 오기 -->
+<select id="memberInfo" parameterType="string" resultType="com.board.dto.MemberDTO">
+	select * from tbl_member where userid = #{userid}
+</select>
+
+<!-- 패스워드 수정 -->
+<update id="memberPasswordModify" parameterType="com.board.dto.MemberDTO">
+	update tbl_member set password = #{password}, lastpwdate= #{lastpwdate} where userid = #{userid}
+</update>
+
+<!-- 마지막 로그인 날짜 등록 하기 -->
+<update id="lastlogindateUpdate" parameterType="com.board.dto.MemberDTO">
+	update tbl_member set lastlogindate = #{lastlogindate} where userid = #{userid}
+</update>
+
+<!-- 마지막 로그아웃 날짜 등록 하기 -->
+<update id="lastlogoutdateUpdate" parameterType="com.board.dto.MemberDTO">
+	update tbl_member set lastlogoutdate = #{lastlogoutdate} where userid = #{userid}
+</update>
+
+<!-- 아이디 찾기 -->
+<select id="searchID" parameterType="com.board.dto.MemberDTO" resultType="string">
+	select userid from tbl_member where username = #{username} and telno = #{telno}
+</select>
+
+<!-- authkey 업데이트 -->
+<update id="authkeyUpdate" parameterType="com.board.dto.MemberDTO">
+	update tbl_member set authkey = #{authkey} where userid = #{userid}
+</update>
+
+<!-- authkey 존재 여부 확인 -->
+<select id="memberInfoByAuthkey" parameterType="com.board.dto.MemberDTO" resultType="com.board.dto.MemberDTO">
+	select * from tbl_member where authkey = #{authkey}
+</select>
+
+<!-- 우편번호 검색 -->
+<select id="addrSearch" parameterType="HashMap" resultType="com.board.dto.AddressDTO">
+	select zipcode,province,road,building,oldaddr from 
+		(select zipcode,province,road,building,oldaddr,row_number() over(order by zipcode) as rnum
+			from tbl_addr where road like '%'||#{addrSearch}||'%' 
+			or building like '%'||#{addrSearch}||'%') addr		
+	where rnum between #{startPoint} and #{endPoint} order by zipcode
+</select>
+
+<!-- 우편번호 행 최대 갯수 계산 -->
+<select id="addrTotalCount" parameterType="string" resultType="int">
+	select count(*) from tbl_addr where road like '%'||#{addrSearch}||'%' or building like '%'||#{addrSearch}||'%' 
+</select>
+
+</mapper>
